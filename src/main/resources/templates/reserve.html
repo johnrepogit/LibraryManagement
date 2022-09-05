@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head">
+</head>
+<script src="https://use.fontawesome.com/c0c323679c.js"></script>
+<script>
+
+function approveReserve(reserveId){
+	var data = {}
+			    data["status"] = "APPROVE";
+			    data["reservationId"] = reserveId;
+			    data["userId"] = localStorage.getItem("userId");
+			$.ajax({
+			    type:"put",
+			    url:"/api/reservation",
+			    data: JSON.stringify(data),
+			    contentType: 'application/json',
+			    success: function(result){
+					$("#successAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:green'>Status updated successfully</p>");
+					$("#successAlert").modal("show");
+					if(localStorage.getItem("role")==='ADMIN')
+						loadReserveTableData(true);
+					else 
+						loadReserveTableData(false);
+				},error: function(err){
+					
+				}
+			});
+}
+
+
+function denyReserve(reserveId){
+	var data = {}
+			    data["status"] = "DENY";
+			    data["reservationId"] = reserveId;
+			    data["userId"] = localStorage.getItem("userId");
+			$.ajax({
+			    type:"put",
+			    url:"/api/reservation",
+			    data: JSON.stringify(data),
+			    contentType: 'application/json',
+			    success: function(result){
+					$("#successAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:green'>Status updated successfully</p>");
+					$("#successAlert").modal("show");
+					if(localStorage.getItem("role")==='ADMIN')
+						loadReserveTableData(true);
+					else 
+						loadReserveTableData(false);
+				},error: function(err){
+					
+				}
+			});
+}
+
+
+	function loadReserveTableData(isAdmin) {
+	
+		if(isAdmin){
+			$.ajax({
+			    type:"get",
+			    url:"/api/reservation",
+			    contentType: 'application/json',
+			    success: function(result){
+					var res = JSON.stringify(result);
+					$("#reserveTableData").empty();
+					var expenseData = "<table class='table table-hover'><thead><tr><th scope='col'>#</th><th scope='col'>Booking Number</th><th scope='col'>Special Request Message</th><th scope='col'>Current Status</th><th scope='col'>FirstName</th><th scope='col'>LastName</th><th scope='col'>Email</th><th scope='col'>Action</th></tr></thead><tbody>";
+					var count = 1;
+					for(var i in result) { 
+						expenseData=expenseData+"<tr><th scope='row'>"+count+"</th><td><b>"+result[i].bookingNumber+"</b></td><td>"+result[i].message+"</td><td><b> "+result[i].status+"</b></td><td><b> "+result[i].user.firstName+"</b></td><td><b> "+result[i].user.lastName+"</b></td><td><b> "+result[i].user.email+"</b></td><td><div class='dropdown'><button class='btn btn-success dropdown-toggle' type='button' id='reserveAction' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>Action</button><div class='dropdown-menu' aria-labelledby='dropdownMenuButton'><a class='dropdown-item' onclick='approveReserve("+result[i].id+");' >APPROVE</a><a class='dropdown-item' onclick='denyReserve("+result[i].id+");'>DENY</a></div></div></td></tr>";
+						count = count+1;
+					}
+					expenseData=expenseData+"</tbody></table>";
+					$("#reserveTableData").html(expenseData);
+					//$(".totalExpenseSpent").html("$"+totalExpenses);
+					
+			    },error: function(err){
+				}
+			});
+		} else {
+			$.ajax({
+			    type:"get",
+			    url:"/api/reservation/all/"+localStorage.getItem("userId"),
+			    contentType: 'application/json',
+			    success: function(result){
+					var res = JSON.stringify(result);
+					$("#reserveTableData").empty();
+					var expenseData = "<table class='table table-hover'><thead><tr><th scope='col'>#</th><th scope='col'>Booking Number</th><th scope='col'>Special Request Message</th><th scope='col'>Current Status</th></tr></thead><tbody>";
+					var count = 1;
+					for(var i in result) { 
+						expenseData=expenseData+"<tr><th scope='row'>"+count+"</th><td><b>"+result[i].bookingNumber+"</b></td><td>"+result[i].message+"</td><td><b> "+result[i].status+"</b></td></tr>";
+						count = count+1;
+					}
+					expenseData=expenseData+"</tbody></table>";
+					$("#reserveTableData").html(expenseData);
+					//$(".totalExpenseSpent").html("$"+totalExpenses);
+					
+			    },error: function(err){
+				}
+			});
+	  	}
+  	}
+  	
+	$(document).ready(function(){
+		if(localStorage.getItem("userId") ==="" || localStorage.getItem("userId") === null 
+		|| localStorage.getItem("userId") === undefined){
+			window.location.replace("/");
+		} else {
+			$('#welcomeName').text("Welcome back, "+localStorage.getItem("firstName")+" "+localStorage.getItem("lastName"));
+		}
+		if(localStorage.getItem("role")==='ADMIN')
+			loadReserveTableData(true);
+		else 
+			loadReserveTableData(false);
+	
+	});
+</script>
+<body>
+
+<!--Navbar-->
+<nav th:replace="fragments/header :: nav"></nav>
+<div style="padding:25px;">
+    <div class="row">
+    <div class="col-9 mx-auto"  style="width: 20rem; margin-top: 50px;padding:25px;">
+    	<h3 id="welcomeName" style="font-family: cursive;font-size: 40px;"></h3>
+    </div>
+    <div class="col-3 mx-auto" style="width: 20rem; margin-top: 50px;padding:30px;">
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-12 mx-auto card"  style="width: 20rem; margin-top: 20px;padding:25px;">
+    	<div class="row">
+		    <div class="col-12"><h3>Reservation Records</h3></div>
+    	</div>
+		<div id="reserveTableData"></div>
+    </div>
+    </div>
+   </div>
+</div>
+
+
+
+<div class="modal" id="errorAlert" role="dialog" aria-labelledby="successAlertLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="text-align: center;padding:50px">
+    	<i class="fa fa-times-circle  fa-5x" aria-hidden="true" style="color: red;"></i><br>
+    	<span id="errorMsg"></span><br>
+      	<button type="button" class="btn btn-success" data-dismiss="modal">Okay</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="successAlert" role="dialog" aria-labelledby="successAlertLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="text-align: center;padding:50px">
+    	<i class="fa fa-check-circle  fa-5x" aria-hidden="true" style="color: green;"></i><br>
+    	<span id="successMsg"></span><br><br>
+      	<button type="button" class="btn btn-success" data-dismiss="modal">Okay</button>
+    </div>
+  </div>
+</div>
+
+
+
+<footer th:replace="fragments/footer :: footer"></footer>
+<div th:replace="fragments/jsScripts :: scripts"></div>
+
+</body>
+</html>

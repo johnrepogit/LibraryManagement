@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head">
+</head>
+<script src="https://use.fontawesome.com/c0c323679c.js"></script>
+<script>
+var cartItem = {};
+	function updateBook(data){
+		$("#bookUId").val(accountList[data].id);
+		$("#addBookUTitle").val(accountList[data].title);
+		$("#addBookUDesc").val(accountList[data].description);
+		$("#updateBookModal").modal("show");
+	}
+	
+	function reserve(){
+		$("#reserveModal").modal('toggle');
+	}
+	
+	function removeItemInCart(data){
+		var bookId = cartItem.cartItemSet[data].book.id;
+		var cartId = cartItem.id;
+		var data = {}
+			    data["bookId"] = bookId;
+			    data["cartId"] = cartId;
+			    data["userId"] = localStorage.getItem("userId");
+		$.ajax({
+				    type:"post",
+				    url:"/api/cart-item/remove",
+				    data: JSON.stringify(data),
+				    contentType: 'application/json',
+				    success: function(result){
+						cartItem = result;
+						$("#successAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:green'>Item removed successfully from Cart</p>");
+						$("#successAlert").modal("show");
+						$("#cartTableData").empty();
+						var dd = "";
+						for(var i in result.cartItemSet) { 
+							
+							dd= dd+"<div class='card'><div class='card-body'><div class='row'><div class='col-2'><i class='fa fa-book fa-10x' aria-hidden='true' style='color: green;'></i></div><div class='col-8'><h5 class='card-title'>"+result.cartItemSet[i].book.title+"</h5></div><div class='col-2'><button type='button' onclick='removeItemInCart("+i+");' id='removeCartBtn' class='btn btn-success' style='float: right;' ><i class='fa fa-cart-minus fa-fw'></i> Remove</button></div></div></div></div>";
+						}
+						$("#cartTableData").html(dd);
+					},error: function(err){
+						
+					}
+				});
+	}
+	
+	function addBookToCart(data){
+		var bookId = accountList[data].id;
+		$.ajax({
+		    type:"get",
+		    url:"/api/cart/"+localStorage.getItem("userId"),
+		    contentType: 'application/json',
+		    success: function(result){
+				var data = {}
+			    data["bookId"] = bookId;
+			    data["cartId"] = result.id;
+			    data["userId"] = localStorage.getItem("userId");
+				$.ajax({
+				    type:"post",
+				    url:"/api/cart-item/add",
+				    data: JSON.stringify(data),
+				    contentType: 'application/json',
+				    success: function(result){
+						cartItem = result;
+						$("#successAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:green'>Book added successfully to Cart</p>");
+						$("#successAlert").modal("show");
+						$("#cartTableData").empty();
+						loadCartsTableData();
+						var dd = "";
+						for(var i in result.cartItemSet) { 
+							
+							dd= dd+"<div class='card'><div class='card-body'><div class='row'><div class='col-2'><i class='fa fa-book fa-10x' aria-hidden='true' style='color: green;'></i></div><div class='col-8'><h5 class='card-title'>"+result.cartItemSet[i].book.title+"</h5></div><div class='col-2'><button type='button' onclick='removeItemInCart("+i+");' id='removeCartBtn' class='btn btn-success' style='float: right;' ><i class='fa fa-cart-minus fa-fw'></i> Remove</button></div></div></div></div>";
+						}
+						$("#cartTableData").html(dd);
+					},error: function(err){
+						
+					}
+				});
+				
+			},error: function(err){
+			}
+		});
+	}
+  	function loadBooksTableData() {
+	//alert("income page loadIncomeTableData"+date);
+		$.ajax({
+		    type:"get",
+		    url:"/api/book",
+		    contentType: 'application/json',
+		    success: function(result){
+				var res = JSON.stringify(result);
+				accountList = result;
+				$("#incomeTableData").empty();
+				var expenseData = "";
+				var count = 1;
+				for(var i in accountList) { 
+					expenseData=expenseData+"<div class='card'><div class='card-body'><div class='row'><div class='col-2'><i class='fa fa-book fa-5x' aria-hidden='true' style='color: green;'></i></div><div class='col-8'><h5 class='card-title'>"+accountList[i].title+"</h5><h6 class='card-subtitle mb-2 text-muted'>"+accountList[i].description+"</h6></div><div class='col-2'>";
+					if(localStorage.getItem("role")==="ADMIN"){
+						expenseData=expenseData+"<button  id='updateBook"+i+"' onclick='updateBook("+i+");' class='btn btn-primary'><i class='fa fa-pen fa-fw'></i>&nbsp;UPDATE</button> <button id='deleteBook"+i+"' onclick='deleteBook("+accountList[i].id+");' class='btn btn-danger' ><i class='fa fa-times fa-fw'></i>&nbsp;DELETE</button></div></div></div></div>";
+					} else {
+						expenseData=expenseData+"<button type='button' onclick='addBookToCart("+i+");' id='addToCartBtn"+i+"' class='btn btn-success' style='float: right;'><i class='fa fa-cart-plus fa-fw'></i> Add to Cart</button></div></div></div></div>";
+					}
+					
+					count = count+1;
+				}
+				$("#incomeTableData").html(expenseData);
+		    },error: function(err){
+			}
+		});
+  	}
+  	
+  	
+  	function loadCartsTableData() {
+		$.ajax({
+		    type:"get",
+		    url:"/api/cart/"+localStorage.getItem("userId"),
+		    contentType: 'application/json',
+		    success: function(result){
+						var dd = "";
+						cartItem = result;
+						$("#cartTableData").empty();
+						for(var i in result.cartItemSet) { 
+							
+							dd= dd+"<div class='card'><div class='card-body'><div class='row'><div class='col-2'><i class='fa fa-book fa-10x' aria-hidden='true' style='color: green;'></i></div><div class='col-8'><h5 class='card-title'>"+result.cartItemSet[i].book.title+"</h5></div><div class='col-2'><button type='button' onclick='removeItemInCart("+i+");' id='removeCartBtn' class='btn btn-success' style='float: right;' data-toggle='modal'><i class='fa fa-cart-minus fa-fw'></i> Remove</button></div></div></div></div>";
+						}
+						$("#cartTableData").html(dd);
+					
+				
+			},error: function(err){
+			}
+		});
+  	}
+  	
+  	
+$(document).ready(function(){
+	if(localStorage.getItem("userId") ==="" || localStorage.getItem("userId") === null 
+	|| localStorage.getItem("userId") === undefined){
+		window.location.replace("/");
+	} else {
+		$('#welcomeName').text("Welcome back, "+localStorage.getItem("firstName")+" "+localStorage.getItem("lastName"));
+	}
+	
+	if(localStorage.getItem("role") ==="USER"){
+		$('#cartData').empty();
+		$('#cartData').html("<div class='mx-auto card'  style='margin-top: 20px;padding:25px;'><div class='row'><div class='col-7'><h3>My Carts</h3></div><div class='col-5'><button class='btn btn-primary' onclick='reserve();'>Reserve</button></div><div id='cartTableData'></div></div></div>");
+	}
+	
+	if(localStorage.getItem("role") ==="ADMIN"){
+		$('#addBookingButton').empty();
+		$('#addBookingButton').html("<button type='button' id='addBookButton'class='btn btn-success' style='float: right;' data-toggle='modal'><i class='fa fa-fax fa-fw'></i> Add Book</button>");
+	}
+	
+	
+	
+	loadBooksTableData();
+	loadCartsTableData();
+  
+  $("#addBookButton").click(function(){
+	$("#addBookModal").modal('toggle');
+	});
+	
+	
+	$("#saveReserveSubmit").click(function(){
+		
+		$.ajax({
+		    type:"get",
+		    url:"/api/cart/"+localStorage.getItem("userId"),
+		    contentType: 'application/json',
+		    success: function(result){
+				var data = {}
+			    data["cartId"] = result.id;
+				data["userId"] = localStorage.getItem("userId");
+				data["requestMessage"] = $("#specialReqMessage").val();
+				
+					$.ajax({
+					    type:"post",
+					    data: JSON.stringify(data),
+					    url:"/api/reservation",
+					    contentType: 'application/json',
+					    success: function(result){
+							$("#reserveModal").modal('hide');
+							$("#successAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:green'>Order reserved : "+result.bookingNumber+" </p>");
+							$("#successAlert").modal("show");
+							loadBooksTableData();
+							loadCartsTableData();
+					    },error: function(err){
+							
+						}
+					});
+			},error: function(err){
+			}
+		});
+	});
+	
+	
+	
+	$("#addBookSubmit").click(function(){
+		var data = {}
+	    data["title"] = $("#addBookTitle").val();
+	    data["description"] = $("#addBookDesc").val();
+	    data["userId"] = localStorage.getItem("userId");
+	    if(data["title"]== null || data["title"] == undefined || data["title"] ==""|| data["title"].trim()=="" ||
+		   data["description"]== null || data["description"] == undefined || data["description"] ==""|| data["description"].trim()==""
+	    	){
+			$("#errorAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:red'>Fields Cannot be blank!</p>");
+				$("#errorAlert").modal("show");
+			return false;
+		}
+		$.ajax({
+		    type:"post",
+		    data: JSON.stringify(data),
+		    url:"/api/book",
+		    contentType: 'application/json',
+		    success: function(result){
+				$("#addBookModal").modal('hide');
+				$("#successAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:green'>Book added successfully</p>");
+				$("#successAlert").modal("show");
+				loadBooksTableData();
+		    },error: function(err){
+			}
+		});
+	});
+	
+	
+	$("#updateBookSubmit").click(function(){
+		var data = {}
+	    data["title"] = $("#addBookUTitle").val();
+	    data["description"] = $("#addBookUDesc").val();
+	    data["userId"] = localStorage.getItem("userId");
+	    if(data["title"]== null || data["title"] == undefined || data["title"] ==""|| data["title"].trim()=="" ||
+		   data["description"]== null || data["description"] == undefined || data["description"] ==""|| data["description"].trim()==""){
+			$("#errorAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:red'>Fields Cannot be blank!</p>");
+			$("#errorAlert").modal("show");
+			return false;
+		}
+		$.ajax({
+		    type:"put",
+		    data: JSON.stringify(data),
+		    url:"/api/book/"+$("#bookUId").val(),
+		    contentType: 'application/json',
+		    success: function(result){
+				$("#updateBookModal").modal('hide');
+				$("#successAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:green'>Book updated successfully</p>");
+				$("#successAlert").modal("show");
+				loadBooksTableData();
+		    },error: function(err){
+			}
+		});
+	});
+
+	
+	
+});
+
+
+	
+	function deleteBook(data){
+		$.ajax({
+		    type:"delete",
+		    url:"/api/book/"+data+"/"+localStorage.getItem("userId"),
+		    contentType: 'application/json',
+		    success: function(result){
+				loadBooksTableData();
+		    },error: function(err){
+				$("#errorAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:red'>"+err.responseJSON.message+"</p>");
+				$("#errorAlert").modal("show");
+			
+			}
+		});
+	}
+
+</script>
+<body>
+
+<!--Navbar-->
+<nav th:replace="fragments/header :: nav"></nav>
+
+<div style="padding:25px;">
+    <div class="row">
+    <div class="col-9 mx-auto"  style="width: 20rem; margin-top: 50px;padding:25px;">
+    	<h3 id="welcomeName" style="font-family: cursive;font-size: 40px;"></h3>
+    </div>
+    <div class="col-3 mx-auto" style="width: 20rem; margin-top: 50px;padding:30px;">
+        <div id="addBookingButton"></div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-7 mx-auto card"  style="width: 20rem; margin-top: 20px;padding:25px;">
+   		 <div class="row">
+		    <div class="col-12"><h3>Books</h3></div>
+		    <div class="col-12" id="incomeTableData"></div>
+    	</div>
+    </div>
+    <div class="col-1"></div>
+    
+    <div class="col-4" id="cartData"></div>
+    
+    
+   </div>
+</div>
+
+
+<div class="modal" id="reserveModal" tabindex="-1" role="dialog" aria-labelledby="addBookModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addBookModalLabel">Reserve</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <div class="form-group">
+		    <label for="exampleInputEmail1">Special request message</label>
+		    <textarea class="form-control" id="specialReqMessage" rows="3"></textarea>
+		  </div>
+		  
+		  
+      </div>
+      <div class="modal-footer">
+        
+        <button type="button"  id="saveReserveSubmit"  class="btn btn-primary">Order</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="modal" id="addBookModal" tabindex="-1" role="dialog" aria-labelledby="addBookModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addBookModalLabel">Add Book</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <div class="form-group">
+		    <label for="exampleInputEmail1">Title</label>
+		    <input type="text" class="form-control" id="addBookTitle" >
+		  </div>
+		  
+		  <div class="form-group">
+		    <label for="exampleInputEmail1">Description</label>
+		    <textarea class="form-control" id="addBookDesc" rows="3"></textarea>
+		  </div>
+		  
+		  
+      </div>
+      <div class="modal-footer">
+        
+        <button type="button"  id="addBookSubmit"  class="btn btn-primary">Add</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="updateBookModal" tabindex="-1" role="dialog" aria-labelledby="addBookModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addBookModalLabel">Update Book</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <div class="form-group">
+          
+          <div class="form-group" style="display: none;">
+		    <input type="text" class="form-control" id="bookUId">
+		</div>
+          
+		    <label for="exampleInputEmail1">Title</label>
+		    <input type="text" class="form-control" id="addBookUTitle">
+		  </div>
+		  
+		  <div class="form-group">
+		    <label for="exampleInputEmail1">Description</label>
+		     <textarea class="form-control" id="addBookUDesc" rows="3"></textarea>
+		  </div>
+		  
+      </div>
+      <div class="modal-footer">
+        
+        <button type="button"  id="updateBookSubmit"  class="btn btn-primary">Update</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal" id="successAlert" role="dialog" aria-labelledby="successAlertLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="text-align: center;padding:50px">
+    	<i class="fa fa-check-circle  fa-5x" aria-hidden="true" style="color: green;"></i><br>
+    	<span id="successMsg"></span><br><br>
+      	<button type="button" class="btn btn-success" data-dismiss="modal">Okay</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="errorAlert" role="dialog" aria-labelledby="successAlertLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="text-align: center;padding:50px">
+    	<i class="fa fa-times-circle  fa-5x" aria-hidden="true" style="color: red;"></i><br>
+    	<span id="errorMsg"></span><br>
+      	<button type="button" class="btn btn-success" data-dismiss="modal">Okay</button>
+    </div>
+  </div>
+</div>
+
+
+<footer th:replace="fragments/footer :: footer"></footer>
+<div th:replace="fragments/jsScripts :: scripts"></div>
+
+</body>
+</html>

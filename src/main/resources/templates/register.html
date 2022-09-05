@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head">
+</head>
+<script src="https://use.fontawesome.com/c0c323679c.js"></script>
+<script>
+function registerClick(){
+	var data = {}
+	data["firstName"] = $("#firstName").val();
+	data["lastName"] = $("#lastName").val();
+    data["email"] = $("#email").val();
+    data["password"] = $("#password").val();
+    data["role"] = $("#role").val();
+    if(data["email"]== null || data["email"] == undefined || data["email"] ==""|| data["email"].trim()=="" ||
+	    	data["password"]== null || data["password"] == undefined || data["password"] ==""|| data["password"].trim()=="" ||
+	    	
+	    	data["firstName"]== null || data["firstName"] == undefined || data["firstName"] ==""|| data["firstName"].trim()=="" ||
+	    	data["lastName"]== null || data["lastName"] == undefined || data["lastName"] ==""|| data["lastName"].trim()=="" ||
+	    	data["role"]== null || data["role"] == undefined || data["role"] ==""|| data["role"].trim()==""){
+			$("#errorAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:red'>Fields Cannot be blank!</p>");
+				$("#errorAlert").modal("show");
+			return false;
+		}
+	$.ajax({
+	    type:"post",
+	    data: JSON.stringify(data),
+	    url:"/api/register",
+	    contentType: 'application/json',
+	    success: function(result){
+			$("#firstName").val("");
+			$("#lastName").val("");
+		    $("#email").val("");
+		    $("#password").val("");
+		   	$("#role").val("");
+	       	$("#successAlert").children('.modal-dialog').children('.modal-content').children('span').html("<p style='font-size:20px;color:green'>User registered successfully</p>");
+			$("#successAlert").modal("show");
+	    },error: function(err){
+			
+		}
+	});
+	}
+</script>
+<body>
+
+<!--Navbar-->
+<nav th:replace="fragments/header :: nav"></nav>
+
+<div class="container" style="padding-bottom:25px;">
+    <div class="row">
+        <div class="card col-6 mx-auto" style="width: 20rem; margin-top: 80px;">
+            <div class="card-body">
+                <h4 class="card-title">Registration:</h4>
+               		<div class="form-group">
+                   	<label class="control-label" for="username">First Name</label>
+                   	<input id="firstName"  type="text" class="form-control" required autofocus="autofocus"/>
+                   	</div>
+                   	
+                   	<div class="form-group">
+                   	<label class="control-label" for="password">Last Name</label>
+                   	<input id="lastName"  type="text" class="form-control" required autofocus="autofocus"/>
+                   	</div>
+                   	
+                   	<div class="form-group">
+                   	<label class="control-label" for="username">Email</label>
+                   	<input id="email"  type="email" class="form-control" required autofocus="autofocus"/>
+                   	</div>
+                   	
+                   	<div class="form-group">
+                   	<label class="control-label" for="password">Password</label>
+                   	<input id="password"  type="password" class="form-control" required autofocus="autofocus"/>
+                   	</div>
+                   	
+                   	<select id="role" class="form-control" aria-label="Default select example">
+					  <option selected>Select ROLE</option>
+					  <option value="ADMIN">ADMIN</option>
+					  <option value="USER">USER</option>
+					</select><br>
+                   	
+                    <button type="submit" onclick="registerClick();" class="btn btn-primary">Register</button>
+                <p>Already have an account?<a href="/login">Click here to login</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="successAlert" role="dialog" aria-labelledby="successAlertLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="text-align: center;padding:50px">
+    	<i class="fa fa-check-circle  fa-5x" aria-hidden="true" style="color: green;"></i><br>
+    	<span id="successMsg"></span><br><br>
+      	<button type="button" class="btn btn-success" data-dismiss="modal">Okay</button>
+    </div>
+  </div>
+</div>
+<footer th:replace="fragments/footer :: footer"></footer>
+<div th:replace="fragments/jsScripts :: scripts"></div>
+
+</body>
+</html>
